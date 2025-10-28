@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نرم‌افزار نمایش مختصات روی نقشه - طراحی شده توسط اکبر فتحی پور</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        
+        .designer-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(5px);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .app-container {
+                flex-direction: row;
+            }
+            
+            .controls {
+                flex: 1;
+            }
+            
+            .map-container {
+                flex: 2;
+            }
+        }
+        
+        .controls {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .designer-signature {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 0.8rem;
+            color: #666;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        
+        input:focus {
+            border-color: #4a6ee0;
+            outline: none;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #4a6ee0, #6a11cb);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .coordinates-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px dashed #ccc;
+        }
+        
+        .coordinates-display h3 {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        
+        .coordinates-display p {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            direction: ltr;
+            text-align: center;
+        }
+        
+        .map-container {
+            height: 500px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .map-watermark {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            z-index: 1000;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .instructions h2 {
+            color: #4a6ee0;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .instructions ol {
+            padding-right: 20px;
+            line-height: 1.8;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: white;
+            padding: 20px;
+            font-size: 0.9rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+        }
+        
+        .footer-design {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        .khorramabad-info {
+            background: linear-gradient(135deg, #4a6ee0, #6a11cb);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="designer-badge">طراح: اکبر فتحی پور</div>
+            <h1>نرم‌افزار نمایش مختصات روی نقشه - خرم‌آباد</h1>
+            <p class="description">این نرم‌افزار به طور پیش‌فرض روی شهر خرم‌آباد متمرکز شده است. می‌توانید مختصات جغرافیایی را روی نقشه نمایش دهید و با کلیک روی نقشه، مختصات نقطه مورد نظر را دریافت کنید.</p>
+        </header>
+        
+        <div class="app-container">
+            <div class="controls">
+                <div class="designer-signature">طراحی شده توسط اکبر فتحی پور</div>
+                
+                <div class="khorramabad-info">
+                    <h3>مختصات پیش‌فرض: خرم‌آباد</h3>
+                    <p>عرض: 33.499701 | طول: 48.362160</p>
+                </div>
+                
+                <div class="input-group">
+                    <label for="latitude">عرض جغرافیایی (Latitude)</label>
+                    <input type="text" id="latitude" placeholder="مثال: 33.499701" value="33.499701">
+                </div>
+                
+                <div class="input-group">
+                    <label for="longitude">طول جغرافیایی (Longitude)</label>
+                    <input type="text" id="longitude" placeholder="مثال: 48.362160" value="48.362160">
+                </div>
+                
+                <button id="show-on-map">نمایش روی نقشه</button>
+                <button id="clear-marker">پاک کردن نشانگر</button>
+                <button id="reset-khorramabad">بازگشت به خرم‌آباد</button>
+                
+                <div class="coordinates-display">
+                    <h3>مختصات انتخاب شده:</h3>
+                    <p id="selected-coords">Lat: 33.499701, Lng: 48.362160 (خرم‌آباد)</p>
+                </div>
+            </div>
+            
+            <div class="map-container">
+                <div class="map-watermark">طراحی: اکبر فتحی پور</div>
+                <div id="map"></div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h2>راهنمای استفاده</h2>
+            <ol>
+                <li>برای نمایش نقطه روی نقشه، مختصات جغرافیایی (طول و عرض) را در فیلدهای مربوطه وارد کرده و دکمه <span class="highlight">"نمایش روی نقشه"</span> را بفشارید.</li>
+                <li>برای دریافت مختصات یک نقطه، کافیست روی نقشه در مکان مورد نظر کلیک کنید.</li>
+                <li>مختصات انتخاب شده در کادر پایین کنترل‌ها نمایش داده می‌شود.</li>
+                <li>برای حذف نشانگر از روی نقشه، از دکمه <span class="highlight">"پاک کردن نشانگر"</span> استفاده کنید.</li>
+                <li>برای بازگشت به نمای خرم‌آباد، از دکمه <span class="highlight">"بازگشت به خرم‌آباد"</span> استفاده کنید.</li>
+            </ol>
+        </div>
+        
+        <footer>
+            <p>نرم‌افزار نمایش مختصات روی نقشه - ساخته شده با Leaflet.js | مختصات پیش‌فرض: خرم‌آباد</p>
+            <p class="footer-design">طراحی و توسعه: اکبر فتحی پور</p>
+        </footer>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // مختصات خرم‌آباد
+        const khorramabadCoords = [33.499701, 48.362160];
+        
+        // مقداردهی اولیه نقشه با تمرکز بر خرم‌آباد
+        const map = L.map('map').setView(khorramabadCoords, 13);
+        
+        // اضافه کردن لایه نقشه
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // اضافه کردن نشانگر خرم‌آباد
+        let currentMarker = L.marker(khorramabadCoords).addTo(map)
+            .bindPopup('خرم‌آباد - طراحی: اکبر فتحی پور')
+            .openPopup();
+        
+        let currentCircle = L.circle(khorramabadCoords, {
+            color: 'red',
+            fillColor: '#f03',
+            fillOpacity: 0.2,
+            radius: 1000
+        }).addTo(map);
+        
+        // رویداد کلیک روی نقشه برای دریافت مختصات
+        map.on('click', function(e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+            
+            // نمایش مختصات در کادر مربوطه
+            document.getElementById('selected-coords').textContent = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+            
+            // پر کردن فیلدهای ورودی
+            document.getElementById('latitude').value = lat.toFixed(6);
+            document.getElementById('longitude').value = lng.toFixed(6);
+            
+            // اضافه کردن نشانگر روی نقشه
+            addMarker(lat, lng);
+        });
+        
+        // تابع برای اضافه کردن نشانگر روی نقشه
+        function addMarker(lat, lng) {
+            // حذف نشانگر قبلی اگر وجود دارد
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+            if (currentCircle) {
+                map.removeLayer(currentCircle);
+            }
+            
+            // اضافه کردن نشانگر جدید
+            currentMarker = L.marker([lat, lng]).addTo(map)
+                .bindPopup(`موقعیت انتخاب شده<br>طراحی: اکبر فتحی پور`);
+            
+            // اضافه کردن دایره برای تاکید بیشتر
+            currentCircle = L.circle([lat, lng], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.2,
+                radius: 500
+            }).addTo(map);
+            
+            // حرکت نقشه به موقعیت نشانگر
+            map.setView([lat, lng], 15);
+        }
+        
+        // تابع برای بازگشت به نمای خرم‌آباد
+        function resetToKhorramabad() {
+            // حذف نشانگر قبلی اگر وجود دارد
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+            if (currentCircle) {
+                map.removeLayer(currentCircle);
+            }
+            
+            // اضافه کردن نشانگر خرم‌آباد
+            currentMarker = L.marker(khorramabadCoords).addTo(map)
+                .bindPopup('خرم‌آباد - طراحی: اکبر فتحی پور')
+                .openPopup();
+            
+            currentCircle = L.circle(khorramabadCoords, {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.2,
+                radius: 1000
+            }).addTo(map);
+            
+            // بازگشت به نمای خرم‌آباد
+            map.setView(khorramabadCoords, 13);
+            
+            // بازنشانی فیلدهای ورودی
+            document.getElementById('latitude').value = khorramabadCoords[0];
+            document.getElementById('longitude').value = khorramabadCoords[1];
+            
+            // بازنشانی نمایش مختصات
+            document.getElementById('selected-coords').textContent = `Lat: ${khorramabadCoords[0]}, Lng: ${khorramabadCoords[1]} (خرم‌آباد)`;
+        }
+        
+        // رویداد برای دکمه نمایش روی نقشه
+        document.getElementById('show-on-map').addEventListener('click', function() {
+            const lat = document.getElementById('latitude').value;
+            const lng = document.getElementById('longitude').value;
+            
+            if (lat && lng) {
+                // بررسی معتبر بودن مقادیر
+                const latNum = parseFloat(lat);
+                const lngNum = parseFloat(lng);
+                
+                if (isNaN(latNum) || isNaN(lngNum)) {
+                    alert("لطفاً مقادیر عددی معتبر وارد کنید");
+                    return;
+                }
+                
+                if (latNum < -90 || latNum > 90) {
+                    alert("عرض جغرافیایی باید بین -90 تا 90 باشد");
+                    return;
+                }
+                
+                if (lngNum < -180 || lngNum > 180) {
+                    alert("طول جغرافیایی باید بین -180 تا 180 باشد");
+                    return;
+                }
+                
+                // اضافه کردن نشانگر
+                addMarker(latNum, lngNum);
+                
+                // نمایش مختصات در کادر مربوطه
+                document.getElementById('selected-coords').textContent = `Lat: ${latNum.toFixed(6)}, Lng: ${lngNum.toFixed(6)}`;
+            } else {
+                alert("لطفاً هر دو فیلد مختصات را پر کنید");
+            }
+        });
+        
+        // رویداد برای دکمه پاک کردن نشانگر
+        document.getElementById('clear-marker').addEventListener('click', function() {
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+                currentMarker = null;
+            }
+            if (currentCircle) {
+                map.removeLayer(currentCircle);
+                currentCircle = null;
+            }
+            
+            document.getElementById('selected-coords').textContent = "هنوز نقطه‌ای انتخاب نشده است";
+            document.getElementById('latitude').value = "";
+            document.getElementById('longitude').value = "";
+        });
+        
+        // رویداد برای دکمه بازگشت به خرم‌آباد
+        document.getElementById('reset-khorramabad').addEventListener('click', resetToKhorramabad);
+    </script>
+</body>
+</html>
